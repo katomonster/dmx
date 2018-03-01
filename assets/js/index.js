@@ -1,13 +1,8 @@
-var timer;
-var $startButton;
-var tempo       = 60;
-var minuteToMil = 60000;
-var subdivision = 4;
-var interval    = Math.round((minuteToMil / tempo) / subdivision);
-var swing       = false;
-var monoAudio   = new Audio();
+const minuteToMil = 60000;
+const subdivision = 4;
+const monoAudio   = new Audio();
 
-var sounds      = {
+const sounds      = {
     'kick':     {'src': 'assets/samples/03_BASS_01.wav',       'volume': 1   },
     'snare':    {'src': 'assets/samples/06_SNARE_01.wav',      'volume': 1   },
     'clap':     {'src': 'assets/samples/26_CLAP.wav',          'volume': 0.1 },
@@ -25,13 +20,19 @@ var sounds      = {
     'cowbell':  {'src': 'assets/samples/808cowbell.wav',       'volume': 0.5 }
 };
 
-var pattern     = [
+const pattern     = [
     {'name': 'kick',    'seq': [1,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0]},
     {'name': 'snare',   'seq': [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0]},
     {'name': 'clap',    'seq': [0,0,0,0,1,1,0,0,1,0,0,1,0,0,1,0]},
     {'name': 'clHat',   'seq': [1,0,1,0,1,0,1,0,0,1,0,1,1,0,1,0]},
     {'name': 'opHat',   'seq': [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1]}
 ];
+
+let timer;
+let $startButton;
+let swing         = false;
+let tempo         = 60;
+let interval      = Math.round((minuteToMil / tempo) / subdivision);
 
 function initAudioPlayer() {
     setObjReference();
@@ -43,66 +44,80 @@ function initAudioPlayer() {
 }
 
 function setObjReference() {
-    $startButton    = $('.start-stop').find('button');
+    $startButton = document.querySelector('.start-stop button');
+    $simpleButtons = document.querySelectorAll('.simple-button');
 
-    $('.simple-button').each(function(i, elt) {
-        elt.addEventListener('click', function(e) {
-            $(e.currentTarget).toggleClass('active');
+    for (const $button of $simpleButtons) {
+        $button.addEventListener('click', function(e) {
+            e.currentTarget.classList.toggle('active');
 
-            if (elt.className.match(/(^| )kick( |$)/)) trigger(sounds.kick);
-            else if (elt.className.match(/(^| )snare( |$)/)) trigger(sounds.snare);
-            else if (elt.className.match(/(^| )clhat( |$)/)) trigger(sounds.clHat);
-            else if (elt.className.match(/(^| )ophat( |$)/)) trigger(sounds.opHat);
-            else if (elt.className.match(/(^| )clap( |$)/)) trigger(sounds.clap);
+            if ($button.className.match(/(^| )kick( |$)/)) trigger(sounds.kick);
+            else if ($button.className.match(/(^| )snare( |$)/)) trigger(sounds.snare);
+            else if ($button.className.match(/(^| )clhat( |$)/)) trigger(sounds.clHat);
+            else if ($button.className.match(/(^| )ophat( |$)/)) trigger(sounds.opHat);
+            else if ($button.className.match(/(^| )clap( |$)/)) trigger(sounds.clap);
         });
-    });
+    }
 }
 
 function handleSwing() {
-    $('.swing').on('click', 'button', function () {
-        $(this).toggleClass('active');
+    document.querySelector('.swing button').addEventListener('click', function (e) {
+        e.target.classList.toggle('active');
         swing = !swing;
     });
 }
 
 function loadPattern() {
-    $('.row').each(function (index, elem) {
-        $(elem).find('button').each(function (i, el) {
-            if (pattern[index].seq[i] === 1) {
-                $(el).addClass('active');
+    $rows = document.querySelectorAll('.row');
+
+    for (let i = 0; i < $rows.length; i++) {
+        const $rowButtons = $rows[i].querySelectorAll('button');
+
+        for (let j = 0; j < $rowButtons.length; j++) {
+            if (pattern[i].seq[j] === 1) {
+                $rowButtons[j].classList.add('active');
             }
-        });
-    });
+        }
+    }
 }
 
 function togglePattern() {
     loadPattern();
-    $('.toggle-pattern').on('click', 'button', function () {
-        var $this = $(this);
-        $this.toggleClass('active');
-        if ($this.hasClass('active')) {
+
+    document.querySelector('.toggle-pattern button').addEventListener('click', function (e) {
+        var $this = e.target;
+        $this.classList.toggle('active');
+        if ($this.classList.contains('active')) {
             loadPattern();
         } else {
-            $('.row').find('button').removeClass('active');
+            const $rowButtons = document.querySelectorAll('.row button');
+
+            for (const $button of $rowButtons) {
+                if ($button.classList.contains('active')) $button.classList.remove('active');
+            }
         }
     });
 }
 
 function handleStartStop() {
-    var count = 0;
+    const $glow = document.querySelector('.glow');
+    let count = 0;
 
-    $startButton.on('click', function(e) {
-        var init = new Date().getTime();
-        $(e.currentTarget).toggleClass('active');
+    $startButton.addEventListener('click', function(e) {
+        let init = new Date().getTime();
+        e.currentTarget.classList.toggle('active');
         handleTempo(init);
-        if ($startButton.hasClass('active')) {
-            $('.glow').removeClass('hide');
+        if ($startButton.classList.contains('active')) {
+            $glow.classList.remove('hide');
             loop();
         } else {
             clearTimeout(timer);
             count = 0;
-            $('.glow').addClass('hide');
-            $('.simple-button').removeClass('on');
+            document.querySelector('.glow').classList.add('hide');
+
+            for (const $simpleButton of document.querySelectorAll('.simple-button')) {
+                $simpleButton.classList.remove('on');
+            }
         }
 
         function loop() {
@@ -121,7 +136,7 @@ function handleStartStop() {
 function handleTempo(init) {
     var diff = new Date().getTime() - init;
 
-    tempo = $('.tempo').find('input').val();
+    tempo = document.querySelector('.tempo input').value;
     interval = Math.round((minuteToMil / tempo) / subdivision - diff);
 }
 
@@ -129,25 +144,25 @@ function handleVolInput() {
     document.onkeydown = function (e) {
         e = e || window.event;
 
-        var $input = $('.tempo').find('input');
-        var volume = Number($input.val());
+        var $input = document.querySelector('.tempo input');
+        var volume = Number($input.value);
 
         switch (e.keyCode) {
             case 38: // up arrow
                 tempo = volume + 1;
-                $input.val(tempo);
+                $input.value = tempo;
                 break;
             case 40: // down arrow
                 tempo = volume - 1;
-                $input.val(tempo);
+                $input.value = tempo;
                 break;
             case 37: // left arrow
                tempo = volume - 1;
-               $input.val(tempo);
+               $input.value = tempo;
                break;
             case 39:  // right arrow
                tempo = volume + 1;
-               $input.val(tempo);
+               $input.value = tempo;
                break;
         }
     };
@@ -155,7 +170,9 @@ function handleVolInput() {
 
 function bindDrumKeys() {
     window.addEventListener("keydown", function() {
-        if ($('.tempo input').is(':focus')) return;
+        if (document.querySelector('.tempo input') === document.activeElement) {
+            return;
+        }
 
         switch (window.event.keyCode) {
             case 49:
@@ -217,31 +234,36 @@ function trigger(sound, count) {
 }
 
 function playSound(audio) {
-    var $glow = $('.glow');
+    var $glow = document.querySelector('.glow');
 
     audio.play();
-    $glow.removeClass('hide');
+    $glow.classList.remove('hide');
 
     setTimeout(function () {
-        $glow.addClass('hide');
+        $glow.classList.add('hide');
     }, interval - 5);
 }
 
 function playSubdiv(count) {
-    var rows = document.getElementsByClassName('row');
+    const rows = document.getElementsByClassName('row');
 
-    for (var i = 0; i < rows.length; i++) {
-        var buttons = rows[i].getElementsByClassName('simple-button');
-        $(buttons).removeClass('on').eq(count).each(function (index, elt) {
-            if (elt.className.match(/(^| )active( |$)/)) {
-                if (elt.className.match(/(^| )kick( |$)/)) trigger(sounds.kick, count);
-                else if (elt.className.match(/(^| )snare( |$)/)) trigger(sounds.snare, count);
-                else if (elt.className.match(/(^| )clhat( |$)/)) trigger(sounds.clHat, count);
-                else if (elt.className.match(/(^| )ophat( |$)/)) trigger(sounds.opHat, count);
-                else if (elt.className.match(/(^| )clap( |$)/)) trigger(sounds.clap, count);
+    for (let i = 0; i < rows.length; i++) {
+        const $buttons = rows[i].getElementsByClassName('simple-button');
+
+        for (let j = 0; j < $buttons.length; j++) {
+            const $button = $buttons[j];
+            $button.classList.remove('on');
+            if (j === count) {
+                if ($button.className.match(/(^| )active( |$)/)) {
+                    if ($button.className.match(/(^| )kick( |$)/)) trigger(sounds.kick, count);
+                    else if ($button.className.match(/(^| )snare( |$)/)) trigger(sounds.snare, count);
+                    else if ($button.className.match(/(^| )clhat( |$)/)) trigger(sounds.clHat, count);
+                    else if ($button.className.match(/(^| )ophat( |$)/)) trigger(sounds.opHat, count);
+                    else if ($button.className.match(/(^| )clap( |$)/)) trigger(sounds.clap, count);
+                }
+                $button.classList.add('on');
             }
-            $(elt).addClass('on');
-        });
+        }
     }
 }
 
