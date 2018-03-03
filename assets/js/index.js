@@ -105,7 +105,7 @@ function handleStartStop() {
 
     $startButton.addEventListener('click', function(e) {
         let init = new Date().getTime();
-        e.currentTarget.classList.toggle('active');
+        $startButton.classList.toggle('active');
         handleTempo(init);
         if ($startButton.classList.contains('active')) {
             $glow.classList.remove('hide');
